@@ -19,6 +19,7 @@ namespace onmt
   public:
     friend class TranslatorFactory;
 
+    double compare(const std::string& a, const std::string& b, ITokenizer& tokenizer) override;
     std::string translate(const std::string& text, ITokenizer& tokenizer) override;
     std::vector<std::string> translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
 

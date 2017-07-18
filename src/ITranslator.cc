@@ -5,6 +5,11 @@
 namespace onmt
 {
 
+  double ITranslator::compare(const std::string& a, const std::string& b)
+  {
+    return compare(a, b, SpaceTokenizer::get_instance());
+  }
+
   std::string ITranslator::translate(const std::string& text)
   {
     return translate(text, SpaceTokenizer::get_instance());

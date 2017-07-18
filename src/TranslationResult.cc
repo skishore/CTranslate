@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "onmt/TranslationResult.h"
 
 namespace onmt
@@ -5,11 +7,25 @@ namespace onmt
 
   TranslationResult::TranslationResult(const std::vector<std::vector<std::string> >& words,
                                        const std::vector<std::vector<std::vector<std::string> > >& features,
-                                       const std::vector<std::vector<std::vector<float> > >& attention)
+                                       const std::vector<std::vector<std::vector<float> > >& attention,
+                                       const Eigen::MatrixBatch<float>& context)
     : _words(words)
     , _features(features)
     , _attention(attention)
+    , _context(context)
   {
+  }
+
+  double TranslationResult::compare(const TranslationResult& other) const {
+    assert(_context.rows() == 1);
+    assert(other._context.rows() == 1);
+    const size_t kContextSize = 500;
+    float result = 0;
+    for (size_t i = 0; i < kContextSize; i++) {
+      result += _context(0, _context.cols() - kContextSize + i) *
+                other._context(0, other._context.cols() - kContextSize + i);
+    }
+    return result;
   }
 
   const std::vector<std::string>& TranslationResult::get_words(size_t index) const

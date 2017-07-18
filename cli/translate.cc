@@ -21,7 +21,6 @@ int main(int argc, char* argv[])
     ("tgt", po::value<std::string>(), "path to the output file (write to the standard output if not set")
     ("phrase_table", po::value<std::string>()->default_value(""), "path to the phrase table")
     ("replace_unk", po::bool_switch()->default_value(false), "replace unknown tokens by source tokens with the highest attention")
-    ("batch_size", po::value<size_t>()->default_value(30), "batch size")
     ("beam_size", po::value<size_t>()->default_value(5), "beam size")
     ("max_sent_length", po::value<size_t>()->default_value(250), "maximum sentence length to produce")
     ("time", po::bool_switch()->default_value(false), "output average translation time")
@@ -57,11 +56,12 @@ int main(int argc, char* argv[])
                                                    vm["cuda"].as<bool>(),
                                                    vm["profiler"].as<bool>());
 
+  const int batch_size = 2;
   std::unique_ptr<BatchReader> reader;
   if (vm.count("src"))
-    reader.reset(new BatchReader(vm["src"].as<std::string>(), vm["batch_size"].as<size_t>()));
+    reader.reset(new BatchReader(vm["src"].as<std::string>(), batch_size));
   else
-    reader.reset(new BatchReader(std::cin, vm["batch_size"].as<size_t>()));
+    reader.reset(new BatchReader(std::cin, batch_size));
 
   std::unique_ptr<BatchWriter> writer;
   if (vm.count("tgt"))
@@ -74,26 +74,10 @@ int main(int argc, char* argv[])
   double total_time_s = 0;
   size_t num_sents = 0;
 
-  for (auto batch = reader->read_next(); !batch.empty(); batch = reader->read_next())
-  {
-    if (vm["time"].as<bool>())
-      t1 = std::chrono::high_resolution_clock::now();
-
-    auto trans = translator->translate_batch(batch);
-
-    if (vm["time"].as<bool>())
-    {
-      t2 = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<float> sec = t2 - t1;
-      total_time_s += sec.count();
-      num_sents += batch.size();
-    }
-
-    writer->write(trans);
+  for (auto batch = reader->read_next(); !batch.empty(); batch = reader->read_next()) {
+    const double similarity = translator->compare(batch[0], batch[1]);
+    printf("Similarity: %0.2f\n", similarity);
   }
-
-  if (vm["time"].as<bool>())
-    std::cerr << "avg real\t" << total_time_s / num_sents << std::endl;
 
   return 0;
 }

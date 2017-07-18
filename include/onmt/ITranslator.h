@@ -15,6 +15,12 @@ namespace onmt
     virtual ~ITranslator() = default;
 
     // Translate a raw text. If the tokenizer is not given, the input text is split on spaces.
+    virtual double
+    compare(const std::string& a, const std::string& b);
+    virtual double
+    compare(const std::string& a, const std::string& b, ITokenizer& tokenizer) = 0;
+
+    // Translate a raw text. If the tokenizer is not given, the input text is split on spaces.
     virtual std::string
     translate(const std::string& text);
     virtual std::string

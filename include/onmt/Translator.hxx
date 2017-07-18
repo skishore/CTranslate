@@ -164,6 +164,22 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  double Translator<MatFwd, MatIn, MatEmb, ModelT>::compare(
+      const std::string& a, const std::string& b, ITokenizer& tokenizer) {
+    std::vector<std::string> a_tokens;
+    std::vector<std::vector<std::string> > a_features;
+    tokenizer.tokenize(a, a_tokens, a_features);
+    const TranslationResult a_result = translate(a_tokens, a_features);
+
+    std::vector<std::string> b_tokens;
+    std::vector<std::vector<std::string> > b_features;
+    tokenizer.tokenize(b, b_tokens, b_features);
+    const TranslationResult b_result = translate(b_tokens, b_features);
+
+    return a_result.compare(b_result);
+  }
+
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   std::string Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text,
                                                                    ITokenizer& tokenizer)
   {
@@ -405,6 +421,8 @@ namespace onmt
     std::vector<MatFwd>& rnn_state_enc,
     MatFwd& context)
   {
+    const MatFwd copied_context = context;
+
     size_t batch_size = batch_tokens.size();
 
     size_t rnn_size = _model.template get_option_value<size_t>("rnn_size");
@@ -795,7 +813,7 @@ namespace onmt
         batch_tgt_features[b].push_back(ids_to_words(_tgt_feat_dicts[f], tgt_feat_ids[f]));
     }
 
-    return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention);
+    return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention, copied_context);
   }
 
 }
